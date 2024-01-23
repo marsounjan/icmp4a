@@ -1,0 +1,23 @@
+*.iml
+.gradle
+/local.properties
+app/build
+
+
+# Shared project files
+
+!.idea
+/.idea/*
+/.idea/misc.xml
+!.idea/codeStyles
+!.idea/fileTemplates
+.idea/fileTemplates/includes/Variables.java
+
+# Other
+
+.DS_Store
+/build
+/captures
+/keystore
+projectFilesBackup/
+hs_err_*
