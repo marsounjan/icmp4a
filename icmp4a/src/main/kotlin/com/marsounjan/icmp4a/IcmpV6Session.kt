@@ -46,7 +46,7 @@ internal class IcmpV6Session : IcmpV6.Session() {
         when (response) {
             is IcmpV6.Message.Response.Echo -> Icmp.PingResult.Success(
                 sequenceNumber = response.sequenceNumber.toInt(),
-                millis = millis
+                ms = millis
             )
 
             is IcmpV6.Message.Response.DestinationUnreachable -> Icmp.PingResult.Failed.Error(

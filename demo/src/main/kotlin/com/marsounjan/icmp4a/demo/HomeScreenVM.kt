@@ -52,6 +52,9 @@ class HomeScreenVM : ViewModel() {
         val host: String,
         val ip: String? = null,
         val pingMs: Long? = null,
+        val pingMinMs: Long? = null,
+        val pingMaxMs: Long? = null,
+        val pingAvgMs: Long? = null,
         val error: String? = null,
         val packetsTransmitted: Int = 0,
         val packetsReceived: Int = 0,
@@ -76,28 +79,31 @@ class HomeScreenVM : ViewModel() {
                 .cacheLatest(RESULT_CACHE_CAPACITY)
                 .map { cachedStats ->
                     val latestStats = cachedStats.last()
-                    Log.d(LOG_TAG, "Ping Result: ${latestStats.latest}")
+                    Log.d(LOG_TAG, "Ping Result: ${latestStats.latestResult}")
                     Stats(
                         host = host,
                         ip = latestStats.ip.hostAddress,
                         packetsTransmitted = latestStats.packetsTransmitted,
                         packetsReceived = latestStats.packetsReceived,
                         packetLoss = latestStats.packetLoss,
-                        pingMs = latestStats.latest.let { result ->
+                        pingMs = latestStats.latestResult.let { result ->
                             when (result) {
-                                is Icmp.PingResult.Success -> result.millis
+                                is Icmp.PingResult.Success -> result.ms
                                 is Icmp.PingResult.Failed -> null
                             }
                         },
+                        pingMinMs = latestStats.stats?.minMs,
+                        pingMaxMs = latestStats.stats?.maxMs,
+                        pingAvgMs = latestStats.stats?.avgMs,
                         results = cachedStats
                             .asReversed()
                             .map { stats ->
-                                stats.latest.let { result ->
+                                stats.latestResult.let { result ->
                                     when (result) {
                                         is Icmp.PingResult.Success -> ResultItem(
                                             num = stats.packetsTransmitted,
                                             message = "",
-                                            ms = result.millis
+                                            ms = result.ms
                                         )
 
                                         is Icmp.PingResult.Failed -> ResultItem(

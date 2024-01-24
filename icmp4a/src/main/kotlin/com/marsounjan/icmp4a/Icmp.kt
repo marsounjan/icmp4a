@@ -30,20 +30,26 @@ import java.net.InetAddress
  */
 interface Icmp {
 
-    data class PingStats(
+    data class PingStatus(
         val ip: InetAddress,
         val packetsTransmitted: Int,
         val packetsReceived: Int,
-        val latest: PingResult
-    ) {
-        val packetLoss: Float = if (packetsTransmitted != 0) 1f - packetsReceived / packetsTransmitted.toFloat() else 1f
-    }
+        val packetLoss: Float,
+        val stats: LatencyStats?,
+        val latestResult: PingResult
+    )
+
+    data class LatencyStats(
+        val minMs: Long,
+        val avgMs: Long,
+        val maxMs: Long
+    )
 
     sealed class PingResult {
 
         data class Success(
             val sequenceNumber: Int,
-            val millis: Long
+            val ms: Long
         ) : PingResult()
 
         sealed class Failed : PingResult() {
@@ -80,7 +86,7 @@ interface Icmp {
         timeoutMillis: Long = 1000,
         packetSize: Int = DEFAULT_PACKET_SIZE,
         network: Network? = null
-    ): PingStats
+    ): PingStatus
 
     /**
      * @throws Error
@@ -90,7 +96,7 @@ interface Icmp {
         timeoutMillis: Long = 1000,
         packetSize: Int = DEFAULT_PACKET_SIZE,
         network: Network? = null
-    ): PingStats
+    ): PingStatus
 
     /**
      * @throws Error
@@ -102,7 +108,7 @@ interface Icmp {
         packetSize: Int = DEFAULT_PACKET_SIZE,
         intervalMillis: Long = 1000,
         network: Network? = null,
-    ): Flow<PingStats>
+    ): Flow<PingStatus>
 
     /**
      * @throws Error
@@ -114,7 +120,7 @@ interface Icmp {
         packetSize: Int = DEFAULT_PACKET_SIZE,
         intervalMillis: Long = 1000,
         network: Network? = null,
-    ): Flow<PingStats>
+    ): Flow<PingStatus>
 
     sealed class Error : Exception() {
 

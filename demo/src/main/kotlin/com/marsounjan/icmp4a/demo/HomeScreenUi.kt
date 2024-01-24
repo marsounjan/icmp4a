@@ -19,6 +19,7 @@
 
 package com.marsounjan.icmp4a.demo
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -40,6 +41,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -132,6 +134,18 @@ private fun StatsBar(
                     text = stats.pingMs?.let { "$it ms" } ?: "N/A",
                     style = MaterialTheme.typography.body1.copy(fontWeight = FontWeight.Bold)
                 )
+            }
+            AnimatedVisibility(visible = stats.pingMinMs != null) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.End
+                ) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "min/avg/max = ${stats.pingMinMs}/${stats.pingAvgMs}/${stats.pingMaxMs} ms",
+                        style = MaterialTheme.typography.caption,
+                    )
+                }
             }
             Spacer(Modifier.height(16.dp))
             Text(

@@ -48,7 +48,7 @@ internal class IcmpV4Session : IcmpV4.Session() {
         when (response) {
             is IcmpV4.Message.Response.Echo -> Icmp.PingResult.Success(
                 sequenceNumber = response.sequenceNumber.toInt(),
-                millis = millis
+                ms = millis
             )
 
             is IcmpV4.Message.Response.DestinationUnreachable -> Icmp.PingResult.Failed.Error(
