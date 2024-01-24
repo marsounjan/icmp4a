@@ -21,7 +21,7 @@ package com.marsounjan.icmp4a
 
 internal class IcmpV6Session : IcmpV6.Session() {
 
-    override val serializer = IcmpV6PacketSerializer()
+    override val serializer = IcmpV6MessageSerializer()
 
     override fun getRequest(sequenceNumber: UShort, identifier: Short): IcmpV6.Message.Request =
         IcmpV6.Message.Request.Echo(

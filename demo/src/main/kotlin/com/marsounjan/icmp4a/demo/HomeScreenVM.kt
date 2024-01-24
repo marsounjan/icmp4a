@@ -19,6 +19,7 @@
 
 package com.marsounjan.icmp4a.demo
 
+import android.util.Log
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -36,6 +37,7 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import java.util.concurrent.LinkedBlockingQueue
 
+private const val LOG_TAG = "DEMO"
 private const val INTERVAL_MS: Long = 1000
 private const val RESULT_CACHE_CAPACITY = 50
 
@@ -68,12 +70,13 @@ class HomeScreenVM : ViewModel() {
     val stats = _hostField
         .flatMapLatest { host ->
             icmp.pingInterval(
-                destination = Icmp.Destination.Hostname(host),
+                host = host,
                 intervalMillis = INTERVAL_MS
             )
                 .cacheLatest(RESULT_CACHE_CAPACITY)
                 .map { cachedStats ->
                     val latestStats = cachedStats.last()
+                    Log.d(LOG_TAG, "Ping Result: ${latestStats.latest}")
                     Stats(
                         host = host,
                         ip = latestStats.ip.hostAddress,
@@ -108,6 +111,7 @@ class HomeScreenVM : ViewModel() {
                     )
                 }
                 .catch {
+                    Log.w(LOG_TAG, "Ping Stream failed", it)
                     when (it) {
                         is Icmp.Error -> emit(
                             Stats(
@@ -146,6 +150,7 @@ class HomeScreenVM : ViewModel() {
         get() = _hostField
 
     fun onHostFieldChanged(value: String) {
+        Log.d(LOG_TAG, "Host changed: $value")
         _hostField.value = value
     }
 

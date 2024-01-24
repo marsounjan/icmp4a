@@ -25,7 +25,6 @@ import android.system.ErrnoException
 import android.system.Os
 import android.system.OsConstants
 import android.system.StructPollfd
-import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.ProducerScope
@@ -47,6 +46,11 @@ import java.nio.ByteBuffer
 
 internal class IcmpImpl : Icmp {
 
+    private sealed class Destination {
+        data class IP(val ip: InetAddress) : Destination()
+        data class Hostname(val host: String) : Destination()
+    }
+
     /**
      *
      *
@@ -55,16 +59,16 @@ internal class IcmpImpl : Icmp {
     private fun createSocketForDestination(destination: InetAddress): FileDescriptor {
         try {
             val fd = when (destination) {
-                is Inet6Address -> Os.socket(OsConstants.AF_INET6, OsConstants.SOCK_DGRAM, OsConstants.IPPROTO_ICMPV6)
                 is Inet4Address -> Os.socket(OsConstants.AF_INET, OsConstants.SOCK_DGRAM, OsConstants.IPPROTO_ICMP)
+                is Inet6Address -> Os.socket(OsConstants.AF_INET6, OsConstants.SOCK_DGRAM, OsConstants.IPPROTO_ICMPV6)
                 else -> throw IllegalStateException("Unsupported destination address type ${destination.javaClass.canonicalName}")
             }
 
-            if (!fd.valid()) throw Icmp.Error.Socket.Creation(message = "Created file descriptor is invalid")
+            if (!fd.valid()) throw Icmp.Error.SocketException(message = "Created file descriptor is invalid")
 
             return fd
         } catch (e: ErrnoException) {
-            throw Icmp.Error.Socket.Creation(message = "Socket creation failed", cause = e)
+            throw Icmp.Error.SocketException(message = "Socket creation failed", cause = e)
         }
     }
 
@@ -80,7 +84,7 @@ internal class IcmpImpl : Icmp {
             try {
                 Os.setsockoptInt(fd, OsConstants.IPPROTO_IP, OsConstants.IP_TOS, IPTOS_LOWDELAY)
             } catch (e: ErrnoException) {
-                throw Icmp.Error.Socket.OptionsSet(message = "Failed to set IP_TOS to low delay")
+                throw Icmp.Error.SocketException(message = "Failed to set IP_TOS to low delay")
             }
         }
     }
@@ -92,7 +96,7 @@ internal class IcmpImpl : Icmp {
         try {
             network.bindSocket(fd)
         } catch (e: IOException) {
-            throw Icmp.Error.Socket.NetworkBind(message = "Failed to bind socket to specified network")
+            throw Icmp.Error.SocketException(message = "Failed to bind socket to specified network")
         }
     }
 
@@ -106,9 +110,7 @@ internal class IcmpImpl : Icmp {
     companion object {
         const val RESPONSE_BUFFER_SIZE = 64
         private const val IPTOS_LOWDELAY = 0x10
-        private const val ICMP_SERVICE_PORT = 7
 
-        //POLLIN isn't populated correctly in test stubs
         protected val POLLIN = (if (OsConstants.POLLIN == 0) 1 else OsConstants.POLLIN).toShort()
         private const val MSG_DONTWAIT = 0x40
     }
@@ -134,10 +136,14 @@ internal class IcmpImpl : Icmp {
     private suspend fun resolveIpForHost(hostname: String, timeoutMillis: Long): HostnameResolutionResult =
         withContext(Dispatchers.IO) {
             try {
-                withTimeout(timeoutMillis) {
-                    HostnameResolutionResult.Success(
-                        inetAddress = InetAddress.getByName(hostname)
-                    )
+                if (hostname.isNotBlank()) {
+                    withTimeout(timeoutMillis) {
+                        HostnameResolutionResult.Success(
+                            inetAddress = InetAddress.getByName(hostname)
+                        )
+                    }
+                } else {
+                    HostnameResolutionResult.Failed.UnknownHost(cause = UnknownHostException("Cannot resolve empty host"))
                 }
             } catch (e: UnknownHostException) {
                 HostnameResolutionResult.Failed.UnknownHost(cause = e)
@@ -170,9 +176,8 @@ internal class IcmpImpl : Icmp {
         return newStats
     }
 
-
-    override suspend fun ping(
-        destination: Icmp.Destination,
+    private suspend fun ping(
+        destination: Destination,
         timeoutMillis: Long,
         packetSize: Int,
         network: Network?
@@ -181,12 +186,14 @@ internal class IcmpImpl : Icmp {
             destination = destination,
             count = 1,
             timeoutMillis = timeoutMillis,
+            packetSize = packetSize,
+            intervalMillis = Long.MAX_VALUE,
             network = network
         )
             .first()
 
-    override fun pingInterval(
-        destination: Icmp.Destination,
+    private fun pingInterval(
+        destination: Destination,
         count: Int?,
         timeoutMillis: Long,
         packetSize: Int,
@@ -195,8 +202,8 @@ internal class IcmpImpl : Icmp {
     ): Flow<Icmp.PingStats> =
         callbackFlow<Icmp.PingStats> {
             val ip = when (destination) {
-                is Icmp.Destination.IP -> destination.ip
-                is Icmp.Destination.Hostname ->
+                is Destination.IP -> destination.ip
+                is Destination.Hostname ->
                     when (val result = resolveIpForHost(
                         hostname = destination.host,
                         timeoutMillis = timeoutMillis
@@ -211,9 +218,8 @@ internal class IcmpImpl : Icmp {
                         }
 
                         is HostnameResolutionResult.Failed.SecurityError -> {
-                            throw Icmp.Error.SystemIO(
-                                message = "Security manager exists doesn't allow hostname resolution",
-                                cause = result.cause
+                            throw Icmp.Error.UnknownHost(
+                                message = "Security manager exists doesn't allow hostname resolution"
                             )
                         }
                     }
@@ -236,20 +242,14 @@ internal class IcmpImpl : Icmp {
                 var sentCount = 0
                 var stats: Icmp.PingStats? = null
                 while (count == null || sentCount++ < count) {
-                    /**
-                     * ping
-                     */
                     try {
                         timestamp = System.currentTimeMillis()
-                        Log.println(Log.DEBUG, "Honza", "session ${packetSession.hashCode()} send")
-                        rc = Os.sendto(fd, packetSession.nextRequest(), 0, ip, ICMP_SERVICE_PORT)
-                        Log.println(Log.DEBUG, "Honza", "session ${packetSession.hashCode()} sent")
+                        rc = Os.sendto(fd, packetSession.nextRequest(), 0, ip, Icmp.PORT)
                         if (rc < 0) {
-                            Log.println(Log.DEBUG, "Honza", "session ${packetSession.hashCode()} send failed")
                             stats = updateAndEmitStats(
                                 previous = stats,
                                 ip = ip,
-                                Icmp.PingResult.Failed.IO("Failed to send ICMP Echo: Os.sendto() failed with $rc")
+                                Icmp.PingResult.Failed.IO("sendto failed with $rc")
                             )
                             continue
                         }
@@ -258,15 +258,20 @@ internal class IcmpImpl : Icmp {
                             rc = Os.poll(pollFds, timeoutMillis.toInt())
                             millis = System.currentTimeMillis() - timestamp
                             if (rc < 0) {
-                                Log.println(Log.DEBUG, "Honza", "session ${packetSession.hashCode()} poll error")
-                                throw Icmp.Error.SystemIO(message = "Listening for ICMP Echo response failed: Os.poll() failed with $rc")
+                                stats = updateAndEmitStats(
+                                    previous = stats,
+                                    ip = ip,
+                                    Icmp.PingResult.Failed.IO(
+                                        message = "poll failed with $rc"
+                                    )
+                                )
                             }
                             if (pollFd.revents != POLLIN) {
                                 stats = updateAndEmitStats(
                                     previous = stats,
                                     ip = ip,
                                     Icmp.PingResult.Failed.RequestTimeout(
-                                        message = "Request timeout for ${ip.hostAddress} seq ${sentCount}",
+                                        message = "Request timeout for ${ip.hostAddress} seq $sentCount",
                                         millis = timeoutMillis
                                     )
                                 )
@@ -275,17 +280,25 @@ internal class IcmpImpl : Icmp {
 
                             rc = recvfrom(fd, buffer)
                             if (rc < 0) {
-                                Log.println(Log.DEBUG, "Honza", "session ${packetSession.hashCode()} read error")
-                                throw Icmp.Error.SystemIO(message = "Reading ICMP Echo failed: Os.recvfrom() failed with $rc")
+                                stats = updateAndEmitStats(
+                                    previous = stats,
+                                    ip = ip,
+                                    Icmp.PingResult.Failed.IO(
+                                        message = "recvfrom failed with $rc"
+                                    )
+                                )
                             }
 
-                            result = packetSession.processResponse(
-                                buffer = ByteBuffer.wrap(buffer, 0, rc),
-                                millis = millis
-                            )
-
-                            if (result == null) {
-                                Log.println(Log.DEBUG, "Honza", "session ${packetSession.hashCode()} result null")
+                            result = try {
+                                packetSession.processResponse(
+                                    buffer = ByteBuffer.wrap(buffer, 0, rc),
+                                    millis = millis
+                                )
+                            } catch (e: IcmpMessageSerializer.InvalidMessageContentException) {
+                                throw Icmp.Error.ProtocolException(
+                                    message = "Failed to deserialize incoming packet",
+                                    cause = e
+                                )
                             }
 
                             if (result != null) {
@@ -299,9 +312,22 @@ internal class IcmpImpl : Icmp {
 
                         }
                     } catch (e: ErrnoException) {
-                        throw Icmp.Error.SystemIO(message = "Icmp session failed", e)
+                        val errIdStr = "Err: ${e.errno}"
+                        stats = updateAndEmitStats(
+                            previous = stats,
+                            ip = ip,
+                            Icmp.PingResult.Failed.IO(
+                                message = e.message?.let { "${it} ($errIdStr)" } ?: errIdStr
+                            )
+                        )
                     } catch (e: SocketException) {
-                        throw Icmp.Error.SystemIO(message = "Icmp session failed", e)
+                        stats = updateAndEmitStats(
+                            previous = stats,
+                            ip = ip,
+                            Icmp.PingResult.Failed.IO(
+                                message = e.message ?: "Socket Exception"
+                            )
+                        )
                     }
 
                     delay(intervalMillis)
@@ -325,4 +351,55 @@ internal class IcmpImpl : Icmp {
             rc
         }
     }
+
+    override suspend fun ping(host: String, timeoutMillis: Long, packetSize: Int, network: Network?): Icmp.PingStats =
+        ping(
+            destination = Destination.Hostname(host),
+            timeoutMillis = timeoutMillis,
+            packetSize = packetSize,
+            network = network
+        )
+
+    override suspend fun ping(ip: InetAddress, timeoutMillis: Long, packetSize: Int, network: Network?): Icmp.PingStats =
+        ping(
+            destination = Destination.IP(ip),
+            timeoutMillis = timeoutMillis,
+            packetSize = packetSize,
+            network = network
+        )
+
+    override fun pingInterval(
+        host: String,
+        count: Int?,
+        timeoutMillis: Long,
+        packetSize: Int,
+        intervalMillis: Long,
+        network: Network?
+    ): Flow<Icmp.PingStats> =
+        pingInterval(
+            destination = Destination.Hostname(host),
+            count = count,
+            timeoutMillis = timeoutMillis,
+            packetSize = packetSize,
+            intervalMillis = intervalMillis,
+            network = network
+        )
+
+    override fun pingInterval(
+        ip: InetAddress,
+        count: Int?,
+        timeoutMillis: Long,
+        packetSize: Int,
+        intervalMillis: Long,
+        network: Network?
+    ): Flow<Icmp.PingStats> =
+        pingInterval(
+            destination = Destination.IP(ip),
+            count = count,
+            timeoutMillis = timeoutMillis,
+            packetSize = packetSize,
+            intervalMillis = intervalMillis,
+            network = network
+        )
+
 }

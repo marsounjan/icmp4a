@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -128,7 +129,7 @@ private fun StatsBar(
                     style = MaterialTheme.typography.body1
                 )
                 Text(
-                    text = "${stats.pingMs?.toString()}ms" ?: "N/A",
+                    text = stats.pingMs?.let { "$it ms" } ?: "N/A",
                     style = MaterialTheme.typography.body1.copy(fontWeight = FontWeight.Bold)
                 )
             }
@@ -138,7 +139,7 @@ private fun StatsBar(
                 style = MaterialTheme.typography.subtitle2
             )
             Text(
-                text = "${stats.packetsTransmitted} packets transmitted, ${stats.packetsReceived} packets received, ${stats.packetLoss}% packet loss",
+                text = "${stats.packetsTransmitted} packets transmitted, ${stats.packetsReceived} packets received, ${(stats.packetLoss * 100).roundToInt()}% packet loss",
                 style = MaterialTheme.typography.caption
             )
         } else {
@@ -170,7 +171,7 @@ private fun ResultItem(
             style = MaterialTheme.typography.body2.copy(fontWeight = FontWeight.Bold)
         )
         Text(
-            text = item.ms.let { "$it ms" } ?: "",
+            text = item.ms?.let { "$it ms" } ?: "",
             style = MaterialTheme.typography.body1
         )
     }

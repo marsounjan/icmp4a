@@ -45,7 +45,7 @@ internal abstract class IcmpMessageSerializer<Request, Response> {
         //reset buffer position
         byteBuffer.rewind()
         //check if buffer is long enough to contain the header
-        if (byteBuffer.remaining() < HEADER_SIZE) throw InvalidMessageContent(message = "Incoming message doesn't match minimal length requirements. Length: ${byteBuffer.remaining()}}")
+        if (byteBuffer.remaining() < HEADER_SIZE) throw InvalidMessageContentException(message = "Incoming message doesn't match minimal length requirements. Length: ${byteBuffer.remaining()}}")
         //extract header
         return MessageHeader(
             type = byteBuffer.get().toUByte(),
@@ -88,14 +88,14 @@ internal abstract class IcmpMessageSerializer<Request, Response> {
     abstract fun serializeRequest(request: Request): ByteBuffer
 
     /**
-     * @throws InvalidMessageContent
+     * @throws InvalidMessageContentException
      */
     abstract fun deserializeResponseFromParts(header: MessageHeader, data: ByteBuffer): Response
 
     /**
      * Don't bother with checksum verification since it's already recalculated by kernel at this point
      *
-     * @throws InvalidMessageContent
+     * @throws InvalidMessageContentException
      */
     fun deserializeResponse(byteBuffer: ByteBuffer): Response {
         //verify message size and extract header
@@ -112,7 +112,7 @@ internal abstract class IcmpMessageSerializer<Request, Response> {
         )
     }
 
-    data class InvalidMessageContent(override val message: String) : Exception()
+    class InvalidMessageContentException(override val message: String) : Exception()
 
     companion object {
         const val HEADER_SIZE = 8

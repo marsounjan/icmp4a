@@ -30,18 +30,13 @@ import java.net.InetAddress
  */
 interface Icmp {
 
-    sealed class Destination {
-        data class IP(val ip: InetAddress) : Destination()
-        data class Hostname(val host: String) : Destination()
-    }
-
     data class PingStats(
         val ip: InetAddress,
         val packetsTransmitted: Int,
         val packetsReceived: Int,
         val latest: PingResult
     ) {
-        val packetLoss: Float = if (packetsTransmitted != 0) packetsReceived / packetsTransmitted.toFloat() else 1f
+        val packetLoss: Float = if (packetsTransmitted != 0) 1f - packetsReceived / packetsTransmitted.toFloat() else 1f
     }
 
     sealed class PingResult {
@@ -81,7 +76,17 @@ interface Icmp {
      * @throws Error
      */
     suspend fun ping(
-        destination: Destination,
+        host: String,
+        timeoutMillis: Long = 1000,
+        packetSize: Int = DEFAULT_PACKET_SIZE,
+        network: Network? = null
+    ): PingStats
+
+    /**
+     * @throws Error
+     */
+    suspend fun ping(
+        ip: InetAddress,
         timeoutMillis: Long = 1000,
         packetSize: Int = DEFAULT_PACKET_SIZE,
         network: Network? = null
@@ -91,7 +96,19 @@ interface Icmp {
      * @throws Error
      */
     fun pingInterval(
-        destination: Destination,
+        host: String,
+        count: Int? = null,
+        timeoutMillis: Long = 1000,
+        packetSize: Int = DEFAULT_PACKET_SIZE,
+        intervalMillis: Long = 1000,
+        network: Network? = null,
+    ): Flow<PingStats>
+
+    /**
+     * @throws Error
+     */
+    fun pingInterval(
+        ip: InetAddress,
         count: Int? = null,
         timeoutMillis: Long = 1000,
         packetSize: Int = DEFAULT_PACKET_SIZE,
@@ -103,35 +120,21 @@ interface Icmp {
 
         class UnknownHost(override val message: String) : Error()
 
-        sealed class Socket : Error() {
-
-            class Creation(
-                override val message: String,
-                override val cause: Throwable? = null
-            ) : Socket()
-
-            class OptionsSet(
-                override val message: String,
-                override val cause: Throwable? = null
-            ) : Socket()
-
-
-            class NetworkBind(
-                override val message: String,
-                override val cause: Throwable? = null
-            ) : Socket()
-
-        }
-
-        class SystemIO(
-            override val message: String?,
+        class SocketException(
+            override val message: String,
             override val cause: Throwable? = null
+        ) : Error()
+
+        class ProtocolException(
+            override val message: String,
+            override val cause: Throwable
         ) : Error()
 
     }
 
     companion object {
 
+        const val PORT = 7
         const val DEFAULT_PACKET_SIZE = 56
 
         fun new(): Icmp = IcmpImpl()

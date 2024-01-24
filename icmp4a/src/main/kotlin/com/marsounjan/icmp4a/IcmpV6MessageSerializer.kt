@@ -21,7 +21,7 @@ package com.marsounjan.icmp4a
 
 import java.nio.ByteBuffer
 
-internal class IcmpV6PacketSerializer : IcmpV6.Serializer() {
+internal class IcmpV6MessageSerializer : IcmpV6.MessageSerializer() {
 
     override fun serializeRequest(request: IcmpV6.Message.Request): ByteBuffer =
         when (request) {
@@ -39,7 +39,7 @@ internal class IcmpV6PacketSerializer : IcmpV6.Serializer() {
             IcmpV6.Message.Type.PACKET_TOO_BIG.id -> deserializePacketTooBig(header)
             IcmpV6.Message.Type.TIME_EXCEEDED.id -> deserializeTimeExceeded(header)
             IcmpV6.Message.Type.PARAMETER_PROBLEM.id -> deserializeParamProblem(header)
-            else -> throw InvalidMessageContent(message = "Unknown response type received: ${header.type}")
+            else -> throw InvalidMessageContentException(message = "Unknown response type received: ${header.type}")
         }
     }
 
@@ -58,7 +58,7 @@ internal class IcmpV6PacketSerializer : IcmpV6.Serializer() {
      */
     private fun deserializeEchoResponse(header: MessageHeader): IcmpV6.Message.Response.Echo {
         //verify code
-        if (header.code != CODE_DEFAULT) throw InvalidMessageContent(message = "Echo message must always have code $CODE_DEFAULT but was ${header.code}")
+        if (header.code != CODE_DEFAULT) throw InvalidMessageContentException(message = "Echo message must always have code $CODE_DEFAULT but was ${header.code}")
 
         header.typeSpecificHeaderPart.reset()
         val identifier = header.typeSpecificHeaderPart.getShort()

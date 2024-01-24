@@ -112,7 +112,7 @@ object IcmpV6 {
 
     }
 
-    internal abstract class Serializer : IcmpMessageSerializer<Message.Request, Message.Response>()
+    internal abstract class MessageSerializer : IcmpMessageSerializer<Message.Request, Message.Response>()
     internal abstract class Session : IcmpSession<Message.Request, Message.Response>()
 
 
