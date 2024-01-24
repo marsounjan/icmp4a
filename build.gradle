@@ -9,7 +9,9 @@ buildscript {
 
         composeBomVersion = '2023.10.01'
         composeCompilerVersion = '1.5.3'
+        xComposeActivity = '1.7.2'
         materialVersion = '1.10.0'
+        xLifecycleVersion = '2.7.0'
     }
 
     repositories {

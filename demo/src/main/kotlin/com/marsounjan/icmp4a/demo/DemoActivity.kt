@@ -20,12 +20,19 @@
 package com.marsounjan.icmp4a.demo
 
 import android.os.Bundle
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.material.MaterialTheme
 
 class DemoActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-    }
 
+        setContent {
+            MaterialTheme {
+                HomeScreenUi()
+            }
+        }
+    }
 }
