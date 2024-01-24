@@ -19,8 +19,17 @@
 
 package com.marsounjan.icmp4a
 
-internal class IcmpV4Session : IcmpV4.Session() {
+import kotlin.math.max
 
+internal class IcmpV4PingSession(
+    override val packetSize: Int,
+) : IcmpV4.PingSession() {
+
+    init {
+        if (packetSize > IcmpV4.DATAGRAM_LENGTH_MAX) throw Icmp.Error.ProtocolException("Packet size '$packetSize' exceeded maximal IPv4 packet size ${IcmpV4.DATAGRAM_LENGTH_MAX}")
+    }
+
+    override val packetBuffer = ByteArray(IcmpMessageSerializer.HEADER_SIZE + max(IcmpV4.ERROR_DATAGRAM_LENGTH_MAX, packetSize))
     override val serializer = IcmpV4MessageSerializer()
 
     override fun getRequest(sequenceNumber: UShort, identifier: Short): IcmpV4.Message.Request =
@@ -44,10 +53,15 @@ internal class IcmpV4Session : IcmpV4.Session() {
             is IcmpV4.Message.Response.Redirect -> false
         }
 
-    override fun packetResponseToIcmpResponse(response: IcmpV4.Message.Response, millis: Long): Icmp.PingResult =
+    override fun packetResponseToIcmpResponse(
+        response: IcmpV4.Message.Response,
+        packetSize: Int,
+        millis: Long
+    ): Icmp.PingResult =
         when (response) {
             is IcmpV4.Message.Response.Echo -> Icmp.PingResult.Success(
                 sequenceNumber = response.sequenceNumber.toInt(),
+                packetSize = packetSize,
                 ms = millis
             )
 

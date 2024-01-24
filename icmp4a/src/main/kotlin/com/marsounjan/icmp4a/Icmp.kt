@@ -49,6 +49,7 @@ interface Icmp {
 
         data class Success(
             val sequenceNumber: Int,
+            val packetSize: Int,
             val ms: Long
         ) : PingResult()
 
@@ -79,46 +80,50 @@ interface Icmp {
     }
 
     /**
+     * @throws IllegalArgumentException
      * @throws Error
      */
     suspend fun ping(
         host: String,
-        timeoutMillis: Long = 1000,
+        timeoutMillis: Long = DEFAULT_TIMEOUT_MS,
         packetSize: Int = DEFAULT_PACKET_SIZE,
         network: Network? = null
     ): PingStatus
 
     /**
+     * @throws IllegalArgumentException
      * @throws Error
      */
     suspend fun ping(
         ip: InetAddress,
-        timeoutMillis: Long = 1000,
+        timeoutMillis: Long = DEFAULT_TIMEOUT_MS,
         packetSize: Int = DEFAULT_PACKET_SIZE,
         network: Network? = null
     ): PingStatus
 
     /**
+     * @throws IllegalArgumentException
      * @throws Error
      */
     fun pingInterval(
         host: String,
         count: Int? = null,
-        timeoutMillis: Long = 1000,
+        timeoutMillis: Long = DEFAULT_TIMEOUT_MS,
         packetSize: Int = DEFAULT_PACKET_SIZE,
-        intervalMillis: Long = 1000,
+        intervalMillis: Long = DEFAULT_INTERVAL_MS,
         network: Network? = null,
     ): Flow<PingStatus>
 
     /**
+     * @throws IllegalArgumentException
      * @throws Error
      */
     fun pingInterval(
         ip: InetAddress,
         count: Int? = null,
-        timeoutMillis: Long = 1000,
+        timeoutMillis: Long = DEFAULT_TIMEOUT_MS,
         packetSize: Int = DEFAULT_PACKET_SIZE,
-        intervalMillis: Long = 1000,
+        intervalMillis: Long = DEFAULT_INTERVAL_MS,
         network: Network? = null,
     ): Flow<PingStatus>
 
@@ -133,7 +138,7 @@ interface Icmp {
 
         class ProtocolException(
             override val message: String,
-            override val cause: Throwable
+            override val cause: Throwable? = null
         ) : Error()
 
     }
@@ -142,6 +147,10 @@ interface Icmp {
 
         const val PORT = 7
         const val DEFAULT_PACKET_SIZE = 56
+        const val PACKET_SIZE_MAX_IPV4 = 65507
+        const val PACKET_SIZE_MAX_IPV6 = 131024
+        private const val DEFAULT_INTERVAL_MS: Long = 1000
+        private const val DEFAULT_TIMEOUT_MS: Long = 1000
 
         fun new(): Icmp = IcmpImpl()
     }

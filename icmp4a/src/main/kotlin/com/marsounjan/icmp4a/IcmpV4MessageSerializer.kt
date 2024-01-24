@@ -24,12 +24,14 @@ import java.nio.ByteBuffer
 
 internal class IcmpV4MessageSerializer : IcmpV4.MessageSerializer() {
 
-    override fun serializeRequest(request: IcmpV4.Message.Request): ByteBuffer =
+    override fun serializeRequest(request: IcmpV4.Message.Request, buffer: ByteArray, datagram: ByteArray): ByteBuffer =
         when (request) {
             is IcmpV4.Message.Request.Echo -> serializeEchoRequest(
+                buffer = buffer,
                 type = request.type.id.toByte(),
                 identifier = request.identifier,
-                sequenceNumber = request.sequenceNumber
+                sequenceNumber = request.sequenceNumber,
+                datagram = datagram
             )
         }
 

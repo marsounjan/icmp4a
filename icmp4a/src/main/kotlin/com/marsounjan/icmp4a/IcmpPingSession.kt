@@ -22,7 +22,18 @@ package com.marsounjan.icmp4a
 import java.nio.ByteBuffer
 import kotlin.random.Random
 
-internal abstract class IcmpSession<Request, Response> {
+internal abstract class IcmpPingSession<Request, Response> {
+
+    protected abstract val packetSize: Int
+    abstract val packetBuffer: ByteArray
+
+    /**
+     * use repeated alphabet as datagram
+     */
+    private val echoDatagramCnt = "abcdefghijklmnopqrstuvwxyz".toByteArray(Charsets.UTF_8)
+    private val echoDatagram by lazy {
+        ByteArray(packetSize) { index -> echoDatagramCnt[index.rem(echoDatagramCnt.size)] }
+    }
 
     protected var sequenceNumber: UShort = 0u
         private set
@@ -37,20 +48,26 @@ internal abstract class IcmpSession<Request, Response> {
 
     protected abstract fun isResponseToLatestRequest(response: Response): Boolean
 
-    protected abstract fun packetResponseToIcmpResponse(response: Response, millis: Long): Icmp.PingResult
+    protected abstract fun packetResponseToIcmpResponse(
+        response: Response,
+        packetSize: Int,
+        millis: Long
+    ): Icmp.PingResult
 
     fun nextRequest(): ByteBuffer {
         return serializer.serializeRequest(
-            getRequest(
+            request = getRequest(
                 sequenceNumber = ++sequenceNumber,
                 identifier = sessionIdentifier
-            )
+            ),
+            buffer = packetBuffer,
+            datagram = echoDatagram
         )
     }
 
-    fun processResponse(buffer: ByteBuffer, millis: Long): Icmp.PingResult? =
+    fun processResponse(buffer: ByteBuffer, packetSize: Int, millis: Long): Icmp.PingResult? =
         serializer.deserializeResponse(buffer)
             .takeIf { isResponseToLatestRequest(it) }
-            ?.let { packetResponseToIcmpResponse(it, millis) }
+            ?.let { packetResponseToIcmpResponse(it, packetSize, millis) }
 
 }

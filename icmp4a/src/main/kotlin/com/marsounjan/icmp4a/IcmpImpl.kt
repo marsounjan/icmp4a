@@ -99,10 +99,10 @@ internal class IcmpImpl : Icmp {
         }
     }
 
-    private fun newPacketSessionForDestination(destination: InetAddress): IcmpSession<*, *> =
+    private fun newPacketSessionForDestination(destination: InetAddress, packetSize: Int): IcmpPingSession<*, *> =
         when (destination) {
-            is Inet4Address -> IcmpV4Session()
-            is Inet6Address -> IcmpV6Session()
+            is Inet4Address -> IcmpV4PingSession(packetSize = packetSize)
+            is Inet6Address -> IcmpV6PingSession(packetSize = packetSize)
             else -> throw IllegalArgumentException("Unsupported destination address type ${destination.javaClass.canonicalName}")
         }
 
@@ -168,8 +168,12 @@ internal class IcmpImpl : Icmp {
         packetSize: Int,
         intervalMillis: Long,
         network: Network?
-    ): Flow<Icmp.PingStatus> =
-        callbackFlow<Icmp.PingStatus> {
+    ): Flow<Icmp.PingStatus> {
+        require(count == null || count > 0) { "packet count must be null (infinite ping) or > 0" }
+        require(timeoutMillis > 0) { "timeout must be > 0" }
+        require(packetSize > 0) { "packet size must be > 0" }
+
+        return callbackFlow<Icmp.PingStatus> {
             val ip = when (destination) {
                 is Destination.IP -> destination.ip
                 is Destination.Hostname ->
@@ -193,7 +197,7 @@ internal class IcmpImpl : Icmp {
                         }
                     }
             }
-            val packetSession = newPacketSessionForDestination(destination = ip)
+
             val fd = createSocketForDestination(destination = ip)
             try {
                 setSocketOptions(fd)
@@ -205,10 +209,10 @@ internal class IcmpImpl : Icmp {
 
                 var timestamp: Long
                 var millis: Long
-                val buffer = ByteArray(RESPONSE_BUFFER_SIZE)
                 var rc: Int
                 var result: Icmp.PingResult?
                 var sentCount = 0
+                val packetSession = newPacketSessionForDestination(destination = ip, packetSize = packetSize)
                 val statusManager = IcmpPingStatusManager(ip = ip)
                 while (count == null || sentCount++ < count) {
                     try {
@@ -238,7 +242,7 @@ internal class IcmpImpl : Icmp {
                                 break
                             }
 
-                            rc = recvfrom(fd, buffer)
+                            rc = recvfrom(fd, packetSession.packetBuffer)
                             if (rc < 0) {
                                 send(statusManager.update(Icmp.PingResult.Failed.IO(message = "recvfrom failed with $rc")))
                                 break
@@ -246,7 +250,8 @@ internal class IcmpImpl : Icmp {
 
                             result = try {
                                 packetSession.processResponse(
-                                    buffer = ByteBuffer.wrap(buffer, 0, rc),
+                                    buffer = ByteBuffer.wrap(packetSession.packetBuffer, 0, rc),
+                                    packetSize = rc,
                                     millis = millis
                                 )
                             } catch (e: IcmpMessageSerializer.InvalidMessageContentException) {
@@ -264,7 +269,7 @@ internal class IcmpImpl : Icmp {
                         }
                     } catch (e: ErrnoException) {
                         val errIdStr = "Err: ${e.errno}"
-                        send(statusManager.update(Icmp.PingResult.Failed.IO(message = e.message?.let { "${it} ($errIdStr)" } ?: errIdStr)))
+                        send(statusManager.update(Icmp.PingResult.Failed.IO(message = e.message?.let { "$it ($errIdStr)" } ?: errIdStr)))
                     } catch (e: SocketException) {
                         send(statusManager.update(Icmp.PingResult.Failed.IO(message = e.message ?: "Socket Exception")))
                     }
@@ -279,6 +284,7 @@ internal class IcmpImpl : Icmp {
             }
         }
             .flowOn(Dispatchers.IO)
+    }
 
 
     private fun recvfrom(fd: FileDescriptor, buffer: ByteArray): Int {
@@ -342,7 +348,6 @@ internal class IcmpImpl : Icmp {
         )
 
     companion object {
-        private const val RESPONSE_BUFFER_SIZE = 64
 
         private const val IPTOS_LOWDELAY = 0x10
 

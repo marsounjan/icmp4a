@@ -97,7 +97,14 @@ object IcmpV4 {
     }
 
     internal abstract class MessageSerializer : IcmpMessageSerializer<Message.Request, Message.Response>()
-    internal abstract class Session : IcmpSession<Message.Request, Message.Response>()
+    internal abstract class PingSession : IcmpPingSession<Message.Request, Message.Response>()
+
+
+    /**
+     * shouldn't exceed minimal IPv4 MTU which is 576
+     */
+    internal const val ERROR_DATAGRAM_LENGTH_MAX = 576
+    internal const val DATAGRAM_LENGTH_MAX = Icmp.PACKET_SIZE_MAX_IPV4
 
 
 }

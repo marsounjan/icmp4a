@@ -39,7 +39,8 @@ import java.util.concurrent.LinkedBlockingQueue
 
 private const val LOG_TAG = "DEMO"
 private const val INTERVAL_MS: Long = 1000
-private const val RESULT_CACHE_CAPACITY = 50
+private const val PACKET_SIZE = 56
+private const val RESULT_CACHE_CAPACITY = 20
 
 class HomeScreenVM : ViewModel() {
 
@@ -74,6 +75,7 @@ class HomeScreenVM : ViewModel() {
         .flatMapLatest { host ->
             icmp.pingInterval(
                 host = host,
+                packetSize = PACKET_SIZE,
                 intervalMillis = INTERVAL_MS
             )
                 .cacheLatest(RESULT_CACHE_CAPACITY)
@@ -102,7 +104,7 @@ class HomeScreenVM : ViewModel() {
                                     when (result) {
                                         is Icmp.PingResult.Success -> ResultItem(
                                             num = stats.packetsTransmitted,
-                                            message = "",
+                                            message = "${result.packetSize} bytes",
                                             ms = result.ms
                                         )
 

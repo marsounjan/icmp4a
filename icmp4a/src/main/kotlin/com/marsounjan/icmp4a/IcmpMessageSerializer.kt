@@ -70,22 +70,25 @@ internal abstract class IcmpMessageSerializer<Request, Response> {
      *    +-+-+-+-+-
      */
     protected fun serializeEchoRequest(
+        buffer: ByteArray,
         type: Byte,
         identifier: Short,
-        sequenceNumber: UShort
+        sequenceNumber: UShort,
+        datagram: ByteArray,
     ): ByteBuffer {
-        val buffer = ByteBuffer.allocate(8)
-        buffer.put(type)
-        buffer.put(CODE_DEFAULT.toByte())
+        val buf = ByteBuffer.wrap(buffer)
+        buf.put(type)
+        buf.put(CODE_DEFAULT.toByte())
         //don't bother with checksum calculation since it's recalculated by kernel anyway
-        buffer.putShort(0)
-        buffer.putShort(identifier)
-        buffer.putShort(sequenceNumber.toShort())
-        buffer.flip()
-        return buffer
+        buf.putShort(0)
+        buf.putShort(identifier)
+        buf.putShort(sequenceNumber.toShort())
+        buf.put(datagram)
+        buf.flip()
+        return buf
     }
 
-    abstract fun serializeRequest(request: Request): ByteBuffer
+    abstract fun serializeRequest(request: Request, buffer: ByteArray, datagram: ByteArray): ByteBuffer
 
     /**
      * @throws InvalidMessageContentException
