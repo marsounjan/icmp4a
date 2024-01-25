@@ -144,15 +144,11 @@ interface Icmp {
     }
 
     companion object {
-
         const val PORT = 7
         const val DEFAULT_PACKET_SIZE = 56
         const val PACKET_SIZE_MAX_IPV4 = 65507
         const val PACKET_SIZE_MAX_IPV6 = 131024
         private const val DEFAULT_INTERVAL_MS: Long = 1000
         private const val DEFAULT_TIMEOUT_MS: Long = 1000
-
-        fun new(): Icmp = IcmpImpl()
     }
-
 }

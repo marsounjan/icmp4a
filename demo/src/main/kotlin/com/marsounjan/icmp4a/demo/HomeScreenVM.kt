@@ -24,6 +24,7 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.marsounjan.icmp4a.Icmp
+import com.marsounjan.icmp4a.Icmp4a
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,7 +45,7 @@ private const val RESULT_CACHE_CAPACITY = 20
 
 class HomeScreenVM : ViewModel() {
 
-    private val icmp = Icmp.new()
+    private val icmp: Icmp = Icmp4a()
 
     private val _hostField = MutableStateFlow("8.8.8.8")
 

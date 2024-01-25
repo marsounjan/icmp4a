@@ -43,7 +43,7 @@ import java.net.SocketException
 import java.net.UnknownHostException
 import java.nio.ByteBuffer
 
-internal class IcmpImpl : Icmp {
+class Icmp4a : Icmp {
 
     private sealed class Destination {
         data class IP(val ip: InetAddress) : Destination()
@@ -106,7 +106,7 @@ internal class IcmpImpl : Icmp {
             else -> throw IllegalArgumentException("Unsupported destination address type ${destination.javaClass.canonicalName}")
         }
 
-    internal sealed class HostnameResolutionResult {
+    private sealed class HostnameResolutionResult {
 
         data class Success(
             val inetAddress: InetAddress
