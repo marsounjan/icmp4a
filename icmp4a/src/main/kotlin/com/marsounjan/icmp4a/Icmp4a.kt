@@ -42,6 +42,7 @@ import java.net.InetAddress
 import java.net.SocketException
 import java.net.UnknownHostException
 import java.nio.ByteBuffer
+import kotlin.math.max
 
 class Icmp4a : Icmp {
 
@@ -219,9 +220,11 @@ class Icmp4a : Icmp {
                 var rc: Int
                 var result: Icmp.PingResult?
                 var sentCount = 0
+                var retryDelayMillis: Long
                 val packetSession = newPacketSessionForDestination(destination = ip, packetSize = packetSize)
                 val statusManager = IcmpPingStatusManager(ip = ip)
                 while (count == null || sentCount++ < count) {
+                    retryDelayMillis = intervalMillis
                     try {
                         timestamp = System.currentTimeMillis()
                         rc = Os.sendto(fd, packetSession.nextRequest(), 0, ip, Icmp.PORT)
@@ -246,6 +249,8 @@ class Icmp4a : Icmp {
                                         )
                                     )
                                 )
+                                //when timeout reached, do not wait the whole delay time with next request but subtract timeout time
+                                retryDelayMillis = max(0, intervalMillis - timeoutMillis)
                                 break
                             }
 
@@ -281,7 +286,7 @@ class Icmp4a : Icmp {
                         send(statusManager.update(Icmp.PingResult.Failed.IO(message = e.message ?: "Socket Exception")))
                     }
 
-                    delay(intervalMillis)
+                    delay(retryDelayMillis)
                 }
             } finally {
                 try {
