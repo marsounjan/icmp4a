@@ -110,14 +110,16 @@ internal class IcmpV6MessageSerializer : IcmpV6.MessageSerializer() {
      *       +               as possible without the ICMPv6 packet           +
      *       |               exceeding the minimum IPv6 MTU [IPv6]           |
      */
-    private val packetTooBigCode =
-        IcmpV6.Message.Response.PacketTooBig.Reason.entries.associateBy { it.id }
 
-    private fun deserializePacketTooBig(header: MessageHeader): IcmpV6.Message.Response.PacketTooBig =
-        IcmpV6.Message.Response.PacketTooBig(
-            reason = packetTooBigCode[header.code],
+    private fun deserializePacketTooBig(header: MessageHeader): IcmpV6.Message.Response.PacketTooBig {
+        //verify code
+        if (header.code != CODE_DEFAULT) throw InvalidMessageContentException(message = "Echo message must always have code $CODE_DEFAULT but was ${header.code}")
+
+        return IcmpV6.Message.Response.PacketTooBig(
             mtu = header.typeSpecificHeaderPart.getInt().toUInt()
         )
+    }
+
 
     /**
      * Time Exceeded Message

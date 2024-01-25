@@ -60,28 +60,22 @@ object IcmpV6 {
             ) : Response(), Icmp.Message.Error {
                 override val type = Type.DESTINATION_UNREACHABLE
 
-                enum class Reason(val id: UByte) {
-                    NO_ROUTE_TO_DESTINATION(id = 0u),
-                    COMMUNICATION_PROHIBITED(id = 1u),
-                    BEYOND_ADDRESS_SCOPE(id = 2u),
-                    ADDRESS_UNREACHABLE(id = 3u),
-                    PORT_UNREACHABLE(id = 4u),
-                    SOURCE_ADDRESS_FAILED_INGRESS_POLICY(id = 5u),
-                    ROUTE_TO_DESTINATION_REJECTED(id = 6u),
-                    SOURCE_ROUTING_HEADER_ERROR(id = 7u)
+                enum class Reason(val id: UByte, val message: String) {
+                    NO_ROUTE_TO_DESTINATION(id = 0u, message = "No route to destination"),
+                    COMMUNICATION_PROHIBITED(id = 1u, message = "Administratively prohibited"),
+                    BEYOND_ADDRESS_SCOPE(id = 2u, message = "Beyond scope of source address"),
+                    ADDRESS_UNREACHABLE(id = 3u, message = "Address unreachable"),
+                    PORT_UNREACHABLE(id = 4u, message = "Port unreachable"),
+                    SOURCE_ADDRESS_FAILED_INGRESS_POLICY(id = 5u, message = "Source address failed ingress policy"),
+                    ROUTE_TO_DESTINATION_REJECTED(id = 6u, message = "Route to destination rejected"),
+                    SOURCE_ROUTING_HEADER_ERROR(id = 7u, message = "Routing header error")
                 }
             }
 
             data class PacketTooBig(
-                val reason: Reason?,
                 val mtu: UInt
             ) : Response(), Icmp.Message.Error {
-                override val type = Type.TIME_EXCEEDED
-
-                enum class Reason(val id: UByte) {
-                    HOP_LIMIT_EXCEEDED_IN_TRANSIT(id = 0u),
-                    FRAGMENT_REASSEMBLY_TIME_EXCEEDED(id = 1u)
-                }
+                override val type = Type.PACKET_TOO_BIG
             }
 
             data class TimeExceeded(
@@ -89,9 +83,9 @@ object IcmpV6 {
             ) : Response(), Icmp.Message.Error {
                 override val type = Type.TIME_EXCEEDED
 
-                enum class Reason(val id: UByte) {
-                    HOP_LIMIT_EXCEEDED_IN_TRANSIT(id = 0u),
-                    FRAGMENT_REASSEMBLY_TIME_EXCEEDED(id = 1u)
+                enum class Reason(val id: UByte, val message: String) {
+                    HOP_LIMIT_EXCEEDED_IN_TRANSIT(id = 0u, message = "Time exceeded: Hop limit"),
+                    FRAGMENT_REASSEMBLY_TIME_EXCEEDED(id = 1u, message = "Time exceeded: Defragmentation failure")
                 }
             }
 
@@ -101,10 +95,10 @@ object IcmpV6 {
             ) : Response(), Icmp.Message.Error {
                 override val type = Type.PARAMETER_PROBLEM
 
-                enum class Reason(val id: UByte) {
-                    ERRONEOUS_HEADER_FIELD(id = 0u),
-                    UNRECOGNIZED_NEXT_HEADER(id = 1u),
-                    UNRECOGNIZED_IPV6_OPTION(id = 2u)
+                enum class Reason(val id: UByte, val message: String) {
+                    ERRONEOUS_HEADER_FIELD(id = 0u, message = "Wrong header field"),
+                    UNRECOGNIZED_NEXT_HEADER(id = 1u, message = "Unknown header"),
+                    UNRECOGNIZED_IPV6_OPTION(id = 2u, message = "Unknown option")
                 }
             }
 

@@ -66,7 +66,7 @@ internal class IcmpV4PingSession(
             )
 
             is IcmpV4.Message.Response.DestinationUnreachable -> Icmp.PingResult.Failed.Error(
-                message = "Destination unreachable: ${response.type}",
+                message = response.reason?.message ?: "Destination Unreachable",
                 error = response
             )
 

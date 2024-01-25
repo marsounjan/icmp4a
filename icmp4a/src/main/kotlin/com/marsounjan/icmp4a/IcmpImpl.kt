@@ -81,7 +81,7 @@ internal class IcmpImpl : Icmp {
     ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
-                Os.setsockoptInt(fd, OsConstants.IPPROTO_IP, OsConstants.IP_TOS, IPTOS_LOWDELAY)
+                Os.setsockoptInt(fd, OsConstants.IPPROTO_IP, OsConstants.IP_TOS, SOCK_OPT_IPTOS_LOWDELAY)
             } catch (e: ErrnoException) {
                 throw Icmp.Error.SocketException(message = "Failed to set IP_TOS to low delay")
             }
@@ -205,6 +205,7 @@ internal class IcmpImpl : Icmp {
 
                 val pollFd = StructPollfd()
                 pollFd.fd = fd
+                val eventPollIn = OsConstants.POLLIN.toShort()
                 val pollFds = arrayOf(pollFd)
 
                 var timestamp: Long
@@ -223,14 +224,14 @@ internal class IcmpImpl : Icmp {
                             continue
                         }
                         while (true) {
-                            pollFd.events = POLLIN
+                            pollFd.events = eventPollIn
                             rc = Os.poll(pollFds, timeoutMillis.toInt())
                             millis = System.currentTimeMillis() - timestamp
                             if (rc < 0) {
                                 send(statusManager.update(Icmp.PingResult.Failed.IO(message = "poll failed with $rc")))
                                 break
                             }
-                            if (pollFd.revents != POLLIN) {
+                            if (pollFd.revents != eventPollIn) {
                                 send(
                                     statusManager.update(
                                         Icmp.PingResult.Failed.RequestTimeout(
@@ -288,7 +289,7 @@ internal class IcmpImpl : Icmp {
 
 
     private fun recvfrom(fd: FileDescriptor, buffer: ByteArray): Int {
-        val rc = Os.recvfrom(fd, buffer, 0, buffer.size, MSG_DONTWAIT, null)
+        val rc = Os.recvfrom(fd, buffer, 0, buffer.size, SOCK_FLAG_MSG_DONTWAIT, null)
         return if (rc == OsConstants.EMSGSIZE) {
             //incoming message longer then buffer
             buffer.size
@@ -349,10 +350,8 @@ internal class IcmpImpl : Icmp {
 
     companion object {
 
-        private const val IPTOS_LOWDELAY = 0x10
-
-        protected val POLLIN = (if (OsConstants.POLLIN == 0) 1 else OsConstants.POLLIN).toShort()
-        private const val MSG_DONTWAIT = 0x40
+        private const val SOCK_OPT_IPTOS_LOWDELAY = 0x10
+        private const val SOCK_FLAG_MSG_DONTWAIT = 0x40
     }
 
 }

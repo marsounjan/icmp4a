@@ -64,22 +64,22 @@ internal class IcmpV6PingSession(
             )
 
             is IcmpV6.Message.Response.DestinationUnreachable -> Icmp.PingResult.Failed.Error(
-                message = "Destination unreachable: ${response.reason}",
+                message = response.reason?.message ?: "Destination Unreachable",
                 error = response,
             )
 
             is IcmpV6.Message.Response.PacketTooBig -> Icmp.PingResult.Failed.Error(
-                message = "Packet too big: ${response.reason}. Maximal MTU: ${response.mtu}",
+                message = "Packet too big. MTU: ${response.mtu}",
                 error = response,
             )
 
             is IcmpV6.Message.Response.TimeExceeded -> Icmp.PingResult.Failed.Error(
-                message = "TimeExceeded: ${response?.reason}",
+                message = response.reason?.message ?: "Time exceeded",
                 error = response,
             )
 
             is IcmpV6.Message.Response.ParameterProblem -> Icmp.PingResult.Failed.Error(
-                message = "Parameter Problem: ${response.reason}",
+                message = (response.reason?.message ?: "Parameter Problem") + " at ${response.pointer}",
                 error = response,
             )
         }

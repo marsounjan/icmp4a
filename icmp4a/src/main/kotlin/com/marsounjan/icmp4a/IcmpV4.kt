@@ -62,13 +62,31 @@ object IcmpV4 {
             ) : Response(), Icmp.Message.Error {
                 override val type = Type.DESTINATION_UNREACHABLE
 
-                enum class Reason(val id: UByte) {
-                    NETWORK_UNREACHABLE(id = 0u),
-                    HOST_UNREACHABLE(id = 1u),
-                    PROTOCOL_UNREACHABLE(id = 2u),
-                    PORT_UNREACHABLE(id = 3u),
-                    FRAGMENTATION_NEEDED(id = 4u),
-                    SOURCE_ROUTE_FAILED(id = 5u)
+                enum class Reason(val id: UByte, val message: String) {
+                    NETWORK_UNREACHABLE(id = 0u, message = "Destination Net Unreachable"),
+                    HOST_UNREACHABLE(id = 1u, message = "Destination Host Unreachable"),
+                    PROTOCOL_UNREACHABLE(id = 2u, message = "Destination Protocol Unreachable"),
+                    PORT_UNREACHABLE(id = 3u, message = "Destination Port Unreachable"),
+                    FRAGMENTATION_NEEDED(id = 4u, message = "Frag needed and DF set"),
+                    DEST_NET_UNKNOWN(id = 6u, message = "Destination network unknown"),
+                    DEST_HOST_UNKNOWN(id = 7u, message = "Destination host unknown"),
+                    SOURCE_HOST_ISOLATED(id = 8u, message = "Source host isolated"),
+                    DEST_NETWORK_ADMIN_PROHIBITED(id = 9u, message = "Destination network is administratively prohibited"),
+                    DEST_HOST_ADMIN_PROHIBITED(id = 10u, message = "Destination host is administratively prohibited"),
+                    NETWORK_UNREACHABLE_FOR_TOS(id = 11u, message = "Network is unreachable for Type Of Service"),
+                    HOST_UNREACHABLE_FOR_TOS(id = 12u, message = "Host is unreachable for Type Of Service"),
+                    COMM_ADMIN_PROHIBITED(
+                        id = 13u,
+                        message = "Communication administratively prohibited (administrative filtering prevents packet from being forwarded)"
+                    ),
+                    HOST_PRECEDENCE_VIOLATION(
+                        id = 14u,
+                        message = "Host precedence violation (indicates the requested precedence is not permitted for the combination of host or network and port)"
+                    ),
+                    PRECEDENCE_CUTOFF(
+                        id = 15u,
+                        message = "Precedence cutoff in effect (precedence of datagram is below the level set by the network administrators)"
+                    )
                 }
             }
 
