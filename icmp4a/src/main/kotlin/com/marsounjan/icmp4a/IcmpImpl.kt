@@ -124,13 +124,18 @@ internal class IcmpImpl : Icmp {
 
     }
 
-    private suspend fun resolveIpForHost(hostname: String, timeoutMillis: Long): HostnameResolutionResult =
+    private suspend fun resolveIpForHost(network: Network?, hostname: String, timeoutMillis: Long): HostnameResolutionResult =
         withContext(Dispatchers.IO) {
             try {
                 if (hostname.isNotBlank()) {
                     withTimeout(timeoutMillis) {
                         HostnameResolutionResult.Success(
-                            inetAddress = InetAddress.getByName(hostname)
+                            inetAddress = if (network != null) {
+                                //if network specified, make sure that even the DNS resolution is done on the network!
+                                network.getByName(hostname)
+                            } else {
+                                InetAddress.getByName(hostname)
+                            }
                         )
                     }
                 } else {
@@ -178,6 +183,7 @@ internal class IcmpImpl : Icmp {
                 is Destination.IP -> destination.ip
                 is Destination.Hostname ->
                     when (val result = resolveIpForHost(
+                        network = network,
                         hostname = destination.host,
                         timeoutMillis = timeoutMillis
                     )) {
