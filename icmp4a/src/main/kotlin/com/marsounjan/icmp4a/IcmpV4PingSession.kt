@@ -40,10 +40,11 @@ internal class IcmpV4PingSession(
 
     override fun isResponseToLatestRequest(response: IcmpV4.Message.Response): Boolean =
         when (response) {
-            //todo honza response identifier
-            //todo kernel is messing up with identifier
-            // https://lwn.net/Articles/443051/
-            // https://stackoverflow.com/a/37456455
+            /**
+             * as described here https://lwn.net/Articles/443051/ kernel is touching the packet and using it's own session identifier (port)
+             * and calculated new checksum. It it's already taken care about session identifier and there is no reason to check it here
+             * (also it wouldn't match with previously our set identifier)
+             */
             is IcmpV4.Message.Response.Echo -> /*response.identifier == sessionIdentifier && */response.sequenceNumber == sequenceNumber
             is IcmpV4.Message.Response.DestinationUnreachable,
             is IcmpV4.Message.Response.SourceQuench,

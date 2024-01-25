@@ -26,7 +26,8 @@ import java.net.InetAddress
 /**
  *  INTERNET CONTROL MESSAGE PROTOCOL (ICMP)
  *
- * RFC: https://datatracker.ietf.org/doc/html/rfc792
+ * IPv4: https://datatracker.ietf.org/doc/html/rfc792
+ * IPv6: https://datatracker.ietf.org/doc/html/rfc4443
  */
 interface Icmp {
 

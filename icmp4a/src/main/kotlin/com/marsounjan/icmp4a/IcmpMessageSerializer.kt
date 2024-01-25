@@ -80,6 +80,7 @@ internal abstract class IcmpMessageSerializer<Request, Response> {
         buf.put(type)
         buf.put(CODE_DEFAULT.toByte())
         //don't bother with checksum calculation since it's recalculated by kernel anyway
+        //read more about this here https://lwn.net/Articles/443051/
         buf.putShort(0)
         buf.putShort(identifier)
         buf.putShort(sequenceNumber.toShort())

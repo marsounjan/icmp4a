@@ -44,6 +44,17 @@ import java.net.UnknownHostException
 import java.nio.ByteBuffer
 import kotlin.math.max
 
+/**
+ *  INTERNET CONTROL MESSAGE PROTOCOL (ICMP) for Android
+ *
+ * Since using raw sockets is not allowed on Android, this class relies on
+ * SOCK_DGRAM with IPPROTO_ICMP socket kind.  It makes it possible to send
+ * ICMP_ECHO messages and receive the corresponding ICMP_ECHOREPLY messages
+ * without any special privileges.
+ *
+ * read more about this here:
+ * https://lwn.net/Articles/443051/
+ */
 class Icmp4a : Icmp {
 
     private sealed class Destination {
@@ -72,11 +83,6 @@ class Icmp4a : Icmp {
         }
     }
 
-    /**
-     * todo
-     *
-     *
-     */
     private fun setSocketOptions(
         fd: FileDescriptor
     ) {
