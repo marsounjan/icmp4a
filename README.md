@@ -6,7 +6,8 @@ Features
 ------
 1. **ICMPv4 Echo/Ping** [RFC][rfcIcmpV4]
 2. **ICMPv6 Echo/Ping** [RFC][rfcIcmpV6]
-3. bind ICMP sockets on speficied (not default) [android.net.Network][androidNetwork]
+3. **bind ICMP sockets on speficied (not default) [android.net.Network][androidNetwork]**
+4. **thread safety** - thanks to kotlin coroutines, you don't need to think about threads. The library does it for you. Feel free to launch ping wherever you want.
 
 How Does It Work?
 ------
