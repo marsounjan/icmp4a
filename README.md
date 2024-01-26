@@ -12,10 +12,11 @@ How Does It Work?
 ------
 1. No `SOCK_RAW` (Raw sockets) - banned on Android
 2. No executing `ping` command via [Runtime.exec()](https://developer.android.com/reference/java/lang/Runtime#exec(java.lang.String[])) in separate process
+3. No Android NDK
 
 
 `icmp4a` is based on using `IPPROTO_ICMP` socket kind and datagram `SOCK_DGRAM` sockets.\
-[As described here][icmpProtoSocketKind], it makes it possible to send `ICMP_ECHO` messages and receive the corresponding `ICMP_ECHOREPLY` messages without any special privileges.\
+[As described here][icmpProtoSocketKind], it makes it possible to send `ICMP_ECHO` messages and receive the corresponding `ICMP_ECHOREPLY` messages without any special privileges.
 
 
 Single ICMP Ping
@@ -102,6 +103,8 @@ buildscript {
 Demo app
 ------
 Check out the [demo app](/demo) to get more idea about on how the library works.
+https://github.com/marsounjan/icmp4a/assets/5037294/54fd5af5-16d9-42cd-9a79-928e6c9abdda
+
 
 License
 -------
