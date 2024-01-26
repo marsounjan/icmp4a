@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'com.vanniktech.maven.publish'
 
 android {
     namespace 'com.marsounjan.icmp4a'
@@ -11,12 +12,12 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
 
 }
@@ -27,4 +28,41 @@ dependencies {
     api "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinCoroutinesVersion"
 
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion"
+}
+
+import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
+import com.vanniktech.maven.publish.SonatypeHost
+
+mavenPublishing {
+    configure(new AndroidSingleVariantLibrary("release", true, false))
+    publishToMavenCentral(SonatypeHost.S01, true)
+    signAllPublications()
+
+    coordinates("com.marsounjan", "icmp4a", System.getenv("VERSION"))
+
+    pom {
+        name = "icmp4a"
+        description = "ICMP Ping for Android"
+        inceptionYear = "2023"
+        url = "https://github.com/marsounjan/icmp4a"
+        licenses {
+            license {
+                name = "The Apache License, Version 2.0"
+                url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                distribution = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            }
+        }
+        developers {
+            developer {
+                id = "marsounjan"
+                name = "Jan Marsoun"
+                url = "https://github.com/marsounjan/"
+            }
+        }
+        scm {
+            url = "https://github.com/marsounjan/icmp4a/"
+            connection = "scm:git:git://github.com/marsounjan/icmp4a.git"
+            developerConnection = "scm:git:ssh://git@github.com/marsounjan/icmp4a.git"
+        }
+    }
 }
