@@ -64,7 +64,7 @@ internal class IcmpPingStatusManager(
             packetsTransmitted = packetsTransmitted,
             packetsReceived = packetsReceived,
             packetLoss = if (packetsTransmitted != 0) 1f - packetsReceived / packetsTransmitted.toFloat() else 1f,
-            latestResult = latest,
+            result = latest,
             stats = if (packetsReceived > 0) {
                 Icmp.LatencyStats(
                     minMs = latencyMin,

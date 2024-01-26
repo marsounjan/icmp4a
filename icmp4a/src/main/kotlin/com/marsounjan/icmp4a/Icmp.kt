@@ -37,7 +37,7 @@ interface Icmp {
         val packetsReceived: Int,
         val packetLoss: Float,
         val stats: LatencyStats?,
-        val latestResult: PingResult
+        val result: PingResult
     )
 
     data class LatencyStats(

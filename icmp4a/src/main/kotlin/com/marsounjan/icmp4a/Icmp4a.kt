@@ -25,8 +25,10 @@ import android.system.ErrnoException
 import android.system.Os
 import android.system.OsConstants
 import android.system.StructPollfd
+import com.marsounjan.icmp4a.Icmp.Error
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -294,6 +296,7 @@ class Icmp4a : Icmp {
 
                     delay(retryDelayMillis)
                 }
+                cancel(message = "Processed all of requested $count Echo messages")
             } finally {
                 try {
                     Os.close(fd)
@@ -315,6 +318,10 @@ class Icmp4a : Icmp {
         }
     }
 
+    /**
+     * @throws IllegalArgumentException
+     * @throws Error
+     */
     override suspend fun ping(host: String, timeoutMillis: Long, packetSize: Int, network: Network?): Icmp.PingStatus =
         ping(
             destination = Destination.Hostname(host),
@@ -323,6 +330,10 @@ class Icmp4a : Icmp {
             network = network
         )
 
+    /**
+     * @throws IllegalArgumentException
+     * @throws Error
+     */
     override suspend fun ping(ip: InetAddress, timeoutMillis: Long, packetSize: Int, network: Network?): Icmp.PingStatus =
         ping(
             destination = Destination.IP(ip),
@@ -331,6 +342,10 @@ class Icmp4a : Icmp {
             network = network
         )
 
+    /**
+     * @throws IllegalArgumentException
+     * @throws Error
+     */
     override fun pingInterval(
         host: String,
         count: Int?,
@@ -348,6 +363,10 @@ class Icmp4a : Icmp {
             network = network
         )
 
+    /**
+     * @throws IllegalArgumentException
+     * @throws Error
+     */
     override fun pingInterval(
         ip: InetAddress,
         count: Int?,

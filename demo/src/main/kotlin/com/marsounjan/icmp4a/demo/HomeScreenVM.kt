@@ -82,14 +82,14 @@ class HomeScreenVM : ViewModel() {
                 .cacheLatest(RESULT_CACHE_CAPACITY)
                 .map { cachedStats ->
                     val latestStats = cachedStats.last()
-                    Log.d(LOG_TAG, "Ping Result: ${latestStats.latestResult}")
+                    Log.d(LOG_TAG, "Ping Result: ${latestStats.result}")
                     Stats(
                         host = host,
                         ip = latestStats.ip.hostAddress,
                         packetsTransmitted = latestStats.packetsTransmitted,
                         packetsReceived = latestStats.packetsReceived,
                         packetLoss = latestStats.packetLoss,
-                        pingMs = latestStats.latestResult.let { result ->
+                        pingMs = latestStats.result.let { result ->
                             when (result) {
                                 is Icmp.PingResult.Success -> result.ms
                                 is Icmp.PingResult.Failed -> null
@@ -101,7 +101,7 @@ class HomeScreenVM : ViewModel() {
                         results = cachedStats
                             .asReversed()
                             .map { stats ->
-                                stats.latestResult.let { result ->
+                                stats.result.let { result ->
                                     when (result) {
                                         is Icmp.PingResult.Success -> ResultItem(
                                             num = stats.packetsTransmitted,
