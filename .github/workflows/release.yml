@@ -35,13 +35,13 @@ jobs:
 
       - name: Publish to MavenCentral
         env:
-          VERSION: ${{ github.ref }}
+          VERSION: ${{ github.ref_name }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVENCENTRALUSERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVENCENTRALPASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_IN_MEMORY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.GPG_KEY_ID }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_KEY_PASSWORD }}
-        run: bash ./gradlew publishAllPublicationsToMavenCentralRepository --stacktrace
+        run: bash ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache --stacktrace
 
       - name: Create Release
         id: create_release
