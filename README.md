@@ -126,8 +126,10 @@ limitations under the License.
 ```
 
  [releases]: https://github.com/marsounjan/icmp4a/releases
- [mavenCentralIcmp4a]: https://search.maven.org/artifact/com.marsounjan/icmp4a/1.0.0/aar
- [icmpProtoSocketKind]: https://lwn.net/Articles/443051
+
+[mavenCentralIcmp4a]: https://central.sonatype.com/artifact/com.marsounjan/icmp4a
+
+[icmpProtoSocketKind]: https://lwn.net/Articles/443051
  [rfcIcmpV4]: https://datatracker.ietf.org/doc/html/rfc792
  [rfcIcmpV6]: https://datatracker.ietf.org/doc/html/rfc4443
  [androidNetwork]: https://developer.android.com/reference/android/net/Network
