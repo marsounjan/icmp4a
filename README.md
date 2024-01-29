@@ -79,7 +79,7 @@ Requirements
 ------------
 
 Works on **Android 6.0+** (**API level 23+**) and **Java 8+**.\
-*In theory it should work even on API level 21, but I had device to test it.*
+*In theory it should work even on API level 21, but I had no device to test it out.*
 
 Releases
 --------
