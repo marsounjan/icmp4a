@@ -1,4 +1,5 @@
 icmp4a
+![Maven Central](https://img.shields.io/maven-central/v/com.marsounjan/icmp4a?style=flat&logo=maven&label=maven-central&color=blue)
 ======
 modern ICMP Echo (Ping) library for Android written in pure Kotlin
 
@@ -83,10 +84,10 @@ Works on **Android 6.0+** (**API level 23+**) and **Java 8+**.\
 Releases
 --------
 
-The library is available on [Maven Central][mavenCentralIcmp4a].
+The library is available on [Maven Central][mavenCentralIcmp4a]. ![Maven Central](https://img.shields.io/maven-central/v/com.marsounjan/icmp4a?style=flat&logo=maven&label=maven-central&color=blue)
 
 ```groovy
-implementation "com.marsounjan:icmp4a:1.0.0"
+implementation "com.marsounjan:icmp4a:<version>"
 ```
 Check [Releases][releases] on this repository to get latest version and release history with changelog.
 
